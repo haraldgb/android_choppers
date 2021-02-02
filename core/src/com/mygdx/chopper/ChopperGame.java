@@ -3,63 +3,65 @@ package com.mygdx.chopper;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
-
-import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+
+import java.text.DecimalFormat;
 
 public class ChopperGame extends ApplicationAdapter {
 	public final static int DESKTOP_START_WIDTH = 480;
 	public final static int DESKTOP_START_HEIGHT = 800;
 	public static final String TITLE = "GET TO THA' CHOPPA";
+	public static final int MAXSPEED = 4;
 
 	OrthographicCamera camera;
 	ExtendViewport viewport;
 
-	float stateTime;
-	TextureAtlas animationTextureAtlas;
+	TextureAtlas textureAtlas;
+	Sprite chopper;
+	Vector2 chopperVelocity = new Vector2(-5,5);
 	SpriteBatch batch;
-	Array<Chopper> choppers;
+	char lastDirection;
+	BitmapFont font;
+	DecimalFormat decFormatter;
 
 	@Override
 	public void create () {
 		camera = new OrthographicCamera();
 		viewport = new ExtendViewport(DESKTOP_START_WIDTH, DESKTOP_START_HEIGHT, camera);
 		batch = new SpriteBatch();
-		animationTextureAtlas = new TextureAtlas("animationframes.txt");
-		Array<TextureAtlas.AtlasRegion> regions = animationTextureAtlas.findRegions("heli");
-		stateTime = 0f;
+		textureAtlas = new TextureAtlas("sprites.txt");
+		chopper = textureAtlas.createSprite("heli1");
+		chopper.flip(true, false);
+		if (Gdx.input.getX() > 0) {
+			lastDirection = 'r';
+		}
+		font = new BitmapFont();
+		decFormatter = new DecimalFormat("#.00");
 		Gdx.gl.glClearColor(0.57f, 0.77f, 0.85f, 1);
-		choppers = new Array<>();
-		choppers.add(new Chopper(batch, animationTextureAtlas, 400, 400, -2, 3));
-		choppers.add(new Chopper(batch, animationTextureAtlas, 100, 0, 2, 3));
-		choppers.add(new Chopper(batch, animationTextureAtlas, 200, 200, -2, 3));
-		choppers.add(new Chopper(batch, animationTextureAtlas, 100, 400, 2, -3));
 	}
 
 	@Override
 	public void render () {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		float deltaTime = Gdx.graphics.getDeltaTime();
-		stateTime += deltaTime;
 		batch.begin();
-		update(deltaTime, stateTime);
+		update();
+		font.draw(batch, "Horizontal position: " + decFormatter.format(chopper.getX())
+						+ "\n    Vertical position: " + decFormatter.format(chopper.getY()),
+				viewport.getWorldWidth() - 180, viewport.getWorldHeight() - 10);
 		batch.end();
 	}
 
 	@Override
 	public void dispose () {
 		batch.dispose();
-		animationTextureAtlas.dispose();
-	}
-
-	private void update(float dt, float st) {
-		this.updateChoppers(dt);
-		this.handleCollisions(dt);
-		this.drawChoppers(st);
+		textureAtlas.dispose();
 	}
 
 	@Override
@@ -68,50 +70,52 @@ public class ChopperGame extends ApplicationAdapter {
 		batch.setProjectionMatrix(camera.combined);
 	}
 
-	private void updateChoppers(float dt) {
-		for (Chopper chopper: choppers) {
-			chopper.update(dt);
+	private void updateSprite (Sprite sprite) {
+		float mouseX = Gdx.input.getX();
+		if (mouseX < sprite.getWidth() / 2) {
+			mouseX = sprite.getWidth() / 2;
+		} else if (mouseX > viewport.getWorldWidth() - sprite.getWidth() / 2) {
+			mouseX = viewport.getWorldWidth() - sprite.getWidth() / 2;
 		}
+		// Gdx.input.getY() gives value from the top of the bottom, which differs from the other y
+		// values.
+		float mouseY = viewport.getWorldHeight() - Gdx.input.getY();
+		if (mouseY < sprite.getHeight() / 2) {
+			mouseY = sprite.getHeight() / 2;
+		} else if (mouseY > viewport.getWorldHeight() - sprite.getHeight() / 2) {
+			mouseY = viewport.getWorldHeight() - sprite.getHeight() / 2;
+		}
+
+		float xCenter = sprite.getX() + sprite.getWidth() / 2;
+		float yCenter = sprite.getY() + sprite.getHeight() / 2;
+		Vector2 mouseVector = new Vector2(mouseX - xCenter, mouseY - yCenter);
+		float vectorLength = mouseVector.len();
+		float scale = MAXSPEED / vectorLength;
+		if (scale > 2) {
+			sprite.setCenter(mouseX, mouseY);
+			mouseVector.set(0, 0);
+		} else {
+			mouseVector.scl(scale);
+			sprite.setPosition(sprite.getX() + mouseVector.x, sprite.getY() + mouseVector.y);
+		}
+		char direction;
+		if (mouseVector.x < 0) {
+			direction = 'l';
+		} else if (mouseVector.x > 0) {
+			direction = 'r';
+		} else {
+			direction = lastDirection;
+		}
+		if (direction != lastDirection) {
+			sprite.flip(true, false);
+		}
+		lastDirection = direction;
 	}
 
-	private void handleCollisions(float dt) {
-		for (int i = 0; i < choppers.size; i++) {
-			Chopper chopper1 = choppers.get(i);
-
-			for (int j = i+1; j < choppers.size; j++) {
-				Chopper chopper2 = choppers.get(j);
-				if (chopper1.getBoundingRectangle().overlaps(chopper2.getBoundingRectangle())) {
-					chopper1.swapDirection(true, true);
-					chopper1.stepOnce(dt);
-					chopper2.swapDirection(true, true);
-					chopper2.stepOnce(dt);
-				}
-			}
-			Vector2 position1 = chopper1.getPosition();
-			float width = chopper1.getWidth();
-			float height = chopper1.getHeight();
-			if (position1.x <= 0) {
-				chopper1.setPosition(0, position1.y);
-				chopper1.swapDirection(true, false);
-			} else if (position1.x + width >= viewport.getWorldWidth()) {
-				chopper1.setPosition(viewport.getWorldWidth() - width, position1.y);
-				chopper1.swapDirection(true, false);
-			}
-			if (position1.y <= 0) {
-				chopper1.setPosition(position1.x, 0);
-				chopper1.swapDirection(false, true);
-			} else if (position1.y + height > viewport.getWorldHeight()) {
-				chopper1.setPosition(position1.x, viewport.getWorldHeight() - height);
-				chopper1.swapDirection(false, true);
-			}
-
-		}
+	private void update() {
+		updateSprite(chopper);
+		chopper.draw(batch);
 	}
 
-	private void drawChoppers(float st) {
-		for (Chopper chopper: choppers) {
-			chopper.draw(st);
-		}
-	}
 
 }

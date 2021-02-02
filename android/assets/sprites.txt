@@ -1,0 +1,61 @@
+sprites.png
+size: 256, 516
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+banana
+  rotate: false
+  xy: 0, 0
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+cherries
+  rotate: false
+  xy: 128, 0
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+crate
+  rotate: false
+  xy: 0, 128
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+heli1
+  rotate: false
+  xy: 0, 256
+  size: 162, 65
+  orig: 162, 65
+  offset: 0, 0
+  index: -1
+heli2
+  rotate: false
+  xy: 0, 321
+  size: 162, 65
+  orig: 162, 65
+  offset: 0, 0
+  index: -1
+heli3
+  rotate: false
+  xy: 0, 386
+  size: 162, 65
+  orig: 162, 65
+  offset: 0, 0
+  index: -1
+heli4
+  rotate: false
+  xy: 0, 451
+  size: 162, 65
+  orig: 162, 65
+  offset: 0, 0
+  index: -1
+orange
+  rotate: false
+  xy: 128, 128
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1

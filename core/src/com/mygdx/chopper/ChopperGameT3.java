@@ -1,0 +1,113 @@
+package com.mygdx.chopper;
+
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
+
+public class ChopperGameT3 extends ApplicationAdapter {
+    public final static int WIDTH = 480;
+    public final static int HEIGHT = 800;
+    public static final String TITLE = "GET TO THA' CHOPPA";
+
+    OrthographicCamera camera;
+    ExtendViewport viewport;
+
+    float stateTime;
+    TextureAtlas animationTextureAtlas;
+    SpriteBatch batch;
+    Array<Chopper> choppers;
+
+    @Override
+    public void create () {
+        camera = new OrthographicCamera();
+        viewport = new ExtendViewport(WIDTH, HEIGHT, camera);
+        batch = new SpriteBatch();
+        animationTextureAtlas = new TextureAtlas("animationframes.txt");
+        Array<TextureAtlas.AtlasRegion> regions = animationTextureAtlas.findRegions("heli");
+        stateTime = 0f;
+        Gdx.gl.glClearColor(0.57f, 0.77f, 0.85f, 1);
+        choppers = new Array<>();
+        choppers.add(new Chopper(batch, animationTextureAtlas, WIDTH-100, 100, -2, 3));
+        choppers.add(new Chopper(batch, animationTextureAtlas, 100, 0, 2, 3));
+        choppers.add(new Chopper(batch, animationTextureAtlas, 200, HEIGHT-200, -2, 3));
+        choppers.add(new Chopper(batch, animationTextureAtlas, 100, 400, 2, -3));
+    }
+
+    @Override
+    public void render () {
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        float deltaTime = Gdx.graphics.getDeltaTime();
+        stateTime += deltaTime;
+        batch.begin();
+        update(deltaTime, stateTime);
+        batch.end();
+    }
+
+    @Override
+    public void dispose () {
+        batch.dispose();
+        animationTextureAtlas.dispose();
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        viewport.update(width, height, true);
+        batch.setProjectionMatrix(camera.combined);
+    }
+
+    private void update(float dt, float st) {
+        this.updateChoppers(dt);
+        this.handleCollisions();
+        this.drawChoppers(st);
+    }
+
+    private void updateChoppers(float dt) {
+        for (Chopper chopper: choppers) {
+            chopper.update(dt);
+        }
+    }
+
+    private void handleCollisions() {
+        for (int i = 0; i < choppers.size; i++) {
+            Chopper chopper1 = choppers.get(i);
+            for (int j = i+1; j < choppers.size; j++) {
+                Chopper chopper2 = choppers.get(j);
+                if (chopper1.getBoundingRectangle().overlaps(chopper2.getBoundingRectangle())) {
+                    chopper1.swapDirection(true, true);
+                    chopper2.swapDirection(true, true);
+                }
+            }
+            Vector2 position = chopper1.getPosition();
+            float width = chopper1.getWidth();
+            float height = chopper1.getHeight();
+            if (position.x <= 0) {
+                chopper1.setPosition(0, position.y);
+                chopper1.swapDirection(true, false);
+            } else if (position.x + width >= WIDTH) {
+                chopper1.setPosition(WIDTH - width, position.y);
+                chopper1.swapDirection(true, false);
+            }
+            if (position.y <= 0) {
+                chopper1.setPosition(position.x, 0);
+                chopper1.swapDirection(false, true);
+            } else if (position.y + height > HEIGHT) {
+                chopper1.setPosition(position.x, HEIGHT - height);
+                chopper1.swapDirection(false, true);
+            }
+
+        }
+    }
+
+    private void drawChoppers(float st) {
+        for (Chopper chopper: choppers) {
+            chopper.draw(st);
+        }
+    }
+
+}

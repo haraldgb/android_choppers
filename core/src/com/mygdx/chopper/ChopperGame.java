@@ -34,13 +34,15 @@ public class ChopperGame extends ApplicationAdapter {
 	@Override
 	public void create () {
 		camera = new OrthographicCamera();
-		viewport = new ExtendViewport(DESKTOP_START_WIDTH, DESKTOP_START_HEIGHT, camera);
+		viewport = new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), camera);
 		batch = new SpriteBatch();
 		textureAtlas = new TextureAtlas("sprites.txt");
 		chopper = textureAtlas.createSprite("heli1");
 		chopper.flip(true, false);
-		if (Gdx.input.getX() > 0) {
+		if (Gdx.input.getX() >= 0) {
 			lastDirection = 'r';
+		} else {
+			lastDirection = 'l';
 		}
 		font = new BitmapFont();
 		decFormatter = new DecimalFormat("#.00");
@@ -53,7 +55,8 @@ public class ChopperGame extends ApplicationAdapter {
 		batch.begin();
 		update();
 		font.draw(batch, "Horizontal position: " + decFormatter.format(chopper.getX())
-						+ "\n    Vertical position: " + decFormatter.format(chopper.getY()),
+						+ "\n    Vertical position: " + decFormatter.format(chopper.getY())
+						+ "\n    " + Gdx.input.getX() + "     " + Gdx.input.getY(),
 				viewport.getWorldWidth() - 180, viewport.getWorldHeight() - 10);
 		batch.end();
 	}

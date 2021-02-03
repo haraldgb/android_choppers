@@ -27,7 +27,7 @@ public class ChopperGame extends ApplicationAdapter {
 	@Override
 	public void create () {
 		camera = new OrthographicCamera();
-		viewport = new ExtendViewport(DESKTOP_START_WIDTH, DESKTOP_START_HEIGHT, camera);
+		viewport = new ExtendViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), camera);
 		batch = new SpriteBatch();
 		textureAtlas = new TextureAtlas("sprites.txt");
 		chopper = textureAtlas.createSprite("heli1");
